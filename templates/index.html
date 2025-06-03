@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasifikasi Sampul Buku</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Add any additional styles here */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+    </style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .file-input-label {
+            transition: all 0.3s ease;
+        }
+        .file-input-label:hover {
+            border-color: #3b82f6; /* Tailwind blue-500 */
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none; /* Sembunyikan default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
+
+    <div class="container bg-slate-800 p-6 sm:p-10 rounded-xl shadow-2xl w-full max-w-2xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+                Klasifikasi Sampul Buku
+            </h1>
+            <p class="text-slate-400 text-sm sm:text-base">Unggah gambar sampul buku untuk mengetahui kategorinya.</p>
+        </header>
+
+        <form id="upload-form" class="space-y-6">
+            <div>
+                <label for="image-upload" class="file-input-label block w-full p-6 sm:p-10 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer text-center hover:border-blue-500 hover:bg-slate-700/50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-slate-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span class="block text-sm sm:text-base font-medium text-slate-300">Seret & Lepas gambar atau Klik untuk memilih</span>
+                    <span class="block text-xs text-slate-500 mt-1">PNG, JPG, JPEG (Maks. 5MB)</span>
+                    <input type="file" id="image-upload" name="image" accept="image/png, image/jpeg, image/jpg" class="hidden">
+                </label>
+                <p id="file-name" class="text-xs text-slate-400 mt-2 text-center"></p>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="mb-4">
+                <label for="model-select" class="block text-sm font-medium text-gray-300 mb-2">Pilih Model</label>
+                <select id="model-select" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+                    {% if models %}
+                        {% for model in models %}
+                            <option value="{{ model.value }}" {% if loop.first %}selected{% endif %}>{{ model.name }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" disabled>No models available</option>
+                    {% endif %}
+                </select>
+                {% if not models %}
+                    <p class="text-red-400 text-sm mt-1">Tidak ada model yang tersedia. Silakan muat ulang halaman.</p>
+                {% endif %}
+            </div>
+
+            <!-- Component Status -->
+            <div class="mb-6 p-4 bg-slate-700/30 rounded-lg">
+                <h3 class="text-sm font-medium text-slate-300 mb-3">Komponen Sistem</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-5 w-5 {% if components_status.scaler %}text-green-500{% else %}text-red-500{% endif %}">
+                            {% if components_status.scaler %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <span class="ml-2 text-sm {% if components_status.scaler %}text-green-400{% else %}text-red-400{% endif %}">Scaler</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-5 w-5 {% if components_status.label_encoder %}text-green-500{% else %}text-red-500{% endif %}">
+                            {% if components_status.label_encoder %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <span class="ml-2 text-sm {% if components_status.label_encoder %}text-green-400{% else %}text-red-400{% endif %}">Label Encoder</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-5 w-5 {% if components_status.preprocessor %}text-green-500{% else %}text-red-500{% endif %}">
+                            {% if components_status.preprocessor %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <span class="ml-2 text-sm {% if components_status.preprocessor %}text-green-400{% else %}text-red-400{% endif %}">Image Preprocessor</span>
+                    </div>
+                </div>
+                {% if not components_status.scaler or not components_status.label_encoder or not components_status.preprocessor %}
+                    <p class="mt-2 text-xs text-yellow-400">Beberapa komponen tidak tersedia. Beberapa fitur mungkin tidak berfungsi dengan baik.</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-blue-500 transition-all duration-150 ease-in-out transform hover:scale-105">
+                Prediksi Kategori
+            </button>
+        </form>
+
+        <div id="loader" class="loader"></div>
+
+        <div id="result-container" class="mt-8 p-4 sm:p-6 bg-slate-700/50 rounded-lg shadow hidden">
+            <h2 class="text-xl sm:text-2xl font-semibold text-slate-200 mb-3">Hasil Prediksi:</h2>
+            <p id="prediction-result" class="text-lg sm:text-xl text-blue-400"></p>
+            <p id="model-used" class="text-xs text-slate-500 mt-1"></p>
+        </div>
+        
+        <div id="error-container" class="mt-6 p-4 bg-red-900/30 border border-red-700 rounded-md text-red-300 hidden">
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <footer class="mt-12 text-center">
+        <p class="text-xs text-slate-500">
+            </p>
+    </footer>
+
+    <script>
+        const uploadForm = document.getElementById('upload-form');
+        const imageUpload = document.getElementById('image-upload');
+        const fileNameDisplay = document.getElementById('file-name');
+        const resultContainer = document.getElementById('result-container');
+        const predictionResult = document.getElementById('prediction-result');
+        const modelUsedDisplay = document.getElementById('model-used');
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+        const loader = document.getElementById('loader');
+        const fileInputLabel = document.querySelector('.file-input-label');
+
+        imageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileNameDisplay.textContent = this.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+
+        // Fungsi untuk drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false); // Mencegah default untuk body juga
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, () => fileInputLabel.classList.add('border-blue-500', 'bg-slate-700/50'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileInputLabel.addEventListener(eventName, () => fileInputLabel.classList.remove('border-blue-500', 'bg-slate-700/50'), false);
+        });
+
+        fileInputLabel.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                imageUpload.files = files; // Assign dropped files ke input
+                fileNameDisplay.textContent = files[0].name;
+            }
+        }
+        // Akhir fungsi drag and drop
+
+
+        uploadForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData();
+            const imageFile = imageUpload.files[0];
+            const modelType = document.getElementById('model-select').value;
+
+            if (!imageFile) {
+                showError('Silakan pilih file gambar terlebih dahulu.');
+                return;
+            }
+
+            formData.append('image', imageFile);
+            formData.append('model_type', modelType);
+
+            loader.style.display = 'block';
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:5001/predict_cover', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('Response:', data);
+
+                if (response.ok) {
+                    predictionResult.textContent = `Kategori: ${data.prediction}`;
+                    modelUsedDisplay.textContent = `Model yang digunakan: ${data.model_used}`;
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    const errorMsg = data.error || 'Terjadi kesalahan saat prediksi.';
+                    console.error('Prediction error:', errorMsg, data);
+                    showError(errorMsg);
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                showError('Tidak dapat terhubung ke server. Pastikan server berjalan.');
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

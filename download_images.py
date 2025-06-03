@@ -31,20 +31,31 @@ if not os.path.isdir(args.output_dirpath):
 
 print('[Download images into "{}"]'.format(args.output_dirpath))
 
-def download_image(i):
+def needs_download(i):
     filename = csv.iloc[i]['Filename']
     category = csv.iloc[i]['Category']
     inner_output_dirpath = os.path.join(args.output_dirpath, category)
-    if not os.path.isdir(inner_output_dirpath):
-        os.mkdir(inner_output_dirpath)
     output_filepath = os.path.join(inner_output_dirpath, filename)
+    return not os.path.isfile(output_filepath)
 
-    url = csv.iloc[i]['Image URL']
-    if not os.path.isfile(output_filepath):
+indices_to_download = [i for i in range(len(csv)) if needs_download(i)]
+
+print(f"Found {len(indices_to_download)} images to download (out of {len(csv)})")
+
+def download_image(i):
+    try:
+        filename = csv.iloc[i]['Filename']
+        category = csv.iloc[i]['Category']
+        inner_output_dirpath = os.path.join(args.output_dirpath, category)
+        os.makedirs(inner_output_dirpath, exist_ok=True)
+        output_filepath = os.path.join(inner_output_dirpath, filename)
+
+        url = csv.iloc[i]['Image URL']
         downloaded_img = request.urlopen(url)
-        f = open(output_filepath, mode='wb')
-        f.write(downloaded_img.read())
+        with open(output_filepath, mode='wb') as f:
+            f.write(downloaded_img.read())
         downloaded_img.close()
-        f.close()
+    except Exception as e:
+        print(f"Failed to download index {i}: {e}")
 
-Parallel(n_jobs=-1)(delayed(download_image)(i) for i in trange(len(csv)))
+Parallel(n_jobs=4)(delayed(download_image)(i) for i in trange(len(indices_to_download)))
