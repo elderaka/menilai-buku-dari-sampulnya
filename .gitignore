@@ -5,6 +5,7 @@ book30-listing-train.csv
 data/
 dataset/
 images/
+images.zip
 *.jpg
 *.jpeg
 *.png
